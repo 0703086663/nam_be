@@ -52,6 +52,9 @@ dotenv.config();
 export const getAllCampaigns = catchAsync(async (req, res, next) => {
   let result = await airtableAxios.get('/meta/bases');
   let bases = result.data.bases;
+
+  console.log(result);
+
   for (let base of bases) {
     let campaign = await Campaign.findById(base.id);
     if (!campaign) {
@@ -65,6 +68,7 @@ export const getAllCampaigns = catchAsync(async (req, res, next) => {
       await Campaign.findByIdAndUpdate(base.id, { name: base.name });
     }
   }
+
   let campaigns = await Campaign.find({}, { __v: false });
   let listBaseId = bases.map((base) => base.id);
   let delFlag = false;

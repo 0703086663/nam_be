@@ -11,6 +11,10 @@ const campaignShema = new mongoose.Schema({
   },
   permissionLevel: {
     type: String
+  },
+  owner: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
   }
 });
 
