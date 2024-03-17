@@ -9,13 +9,19 @@ export const getUserById = catchAsync(async (req, res) => {
 
   const user = await User.findById(_id);
 
-  return res.status(200).json({ message: 'Successfully', data: user });
+  baseAirtable('users').find(_id, function (err, record) {
+    if (err) return err;
+
+    return res.status(200).json({ message: 'Successfully', data: user });
+  });
 });
 
 export const getProfile = catchAsync(async (req, res) => {
-  const user = await User.findById(req.user.user._id);
+  const _id = req.user.user._id;
 
-  baseAirtable('users').find(req.user.user._id, function (err, record) {
+  const user = await User.findById(_id);
+
+  baseAirtable('users').find(_id, function (err, record) {
     if (err) return err;
 
     return res.status(200).json({ message: 'Successfully', data: user });
