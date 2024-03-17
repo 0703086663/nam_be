@@ -8,8 +8,8 @@ import {
 
 const router = Router();
 
-router.route('/delete/:campaignId').post(deleteById);
-router.route('/update/:campaignId').post(update);
+router.route('/delete/:campaignId').delete(deleteById);
+router.route('/update/:campaignId').patch(update);
 router.route('/create').post(create);
 router.route('/').get(getAll);
 

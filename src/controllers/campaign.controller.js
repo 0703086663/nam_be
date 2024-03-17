@@ -82,12 +82,28 @@ export const create = catchAsync(async (req, res, next) => {
 
 export const update = catchAsync(async (req, res, next) => {
   const _id = req.params.campaignId;
+  const owner = req.user.user;
 
-  if (!_id) throw new Error(`Campaign ID not provided`);
+  if (!_id) return res.status(400).json({ error: 'Campaign ID not provided' });
 
-  await baseAirtable('campaigns').update(_id, ...req.body);
+  const campaign = await Campaign.findById(_id);
+  if (!campaign) return res.status(404).json({ error: 'Campaign not found' });
 
-  const updatedCampaign = await Campaign.findByIdAndUpdate(_id, req.body);
+  if (campaign.owner_id !== owner._id)
+    return res
+      .status(403)
+      .json({ error: 'You are not allowed to update this campaign' });
+
+  // TODO: Loi~
+  await baseAirtable('campaigns').update(
+    'fd158b52-31a3-47db-ab4a-4262332b736c',
+    { name: 'Test' }
+  );
+  console.log('Done');
+
+  const updatedCampaign = await Campaign.findByIdAndUpdate(_id, req.body, {
+    new: true
+  });
 
   return res.json({
     message: 'Campaign updated successfully',
@@ -96,5 +112,20 @@ export const update = catchAsync(async (req, res, next) => {
 });
 
 export const deleteById = catchAsync(async (req, res, next) => {
-  const campaignId = req.params.campaignId;
+  const _id = req.params.campaignId;
+
+  if (!_id) throw new Error(`Campaign ID not provided`);
+
+  try {
+    // TODO: Loi~
+    await baseAirtable('campaigns').destroy(_id);
+
+    await Campaign.delete({ _id });
+
+    return res.status(204).json({
+      message: 'Campaign deleted successfully'
+    });
+  } catch (err) {
+    console.error(err);
+  }
 });
