@@ -4,7 +4,6 @@ import airtableAxios from '../utils/transferData.js';
 import { Survey } from '../model/survey.model.js';
 import { Field } from '../model/field.model.js';
 import { Response } from '../model/response.model.js';
-import { v4 as uuidv4 } from 'uuid';
 import baseAirtable from '../utils/baseAirtable.js';
 
 export const getAll = catchAsync(async (req, res, next) => {
@@ -65,19 +64,25 @@ export const create = catchAsync(async (req, res, next) => {
 
   if (!name) return res.status(400).json({ message: `Name can not be empty` });
 
-  const campaign = new Campaign({
-    _id: uuidv4(),
+  var campaign = new Campaign({
     name,
-    owner_id: user._id.toString()
+    owner_id: user._id.toString(),
+    createdAt: new Date(),
+    updatedAt: new Date()
   });
 
-  baseAirtable.table('campaigns').create(campaign);
+  baseAirtable.table('campaigns').create(campaign, async (err, record) => {
+    if (err) {
+      return err;
+    }
 
-  await campaign.save();
+    campaign._doc = { ...campaign._doc, _id: record.getId() };
+    await campaign.save();
 
-  return res
-    .status(201)
-    .json({ data: campaign, message: 'Created successfully' });
+    return res
+      .status(201)
+      .json({ data: campaign, message: 'Created successfully' });
+  });
 });
 
 export const update = catchAsync(async (req, res, next) => {
@@ -105,7 +110,7 @@ export const update = catchAsync(async (req, res, next) => {
     new: true
   });
 
-  return res.json({
+  return res.status(204).json({
     message: 'Campaign updated successfully',
     campaign: updatedCampaign
   });

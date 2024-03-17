@@ -2,7 +2,6 @@ import { User } from '../model/user.model.js';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
 import baseAirtable from '../utils/baseAirtable.js';
-import { v4 as uuidv4 } from 'uuid';
 import { catchAsync } from '../utils/catchAsync.js';
 
 export const getUserById = catchAsync(async (req, res) => {
@@ -16,7 +15,11 @@ export const getUserById = catchAsync(async (req, res) => {
 export const getProfile = catchAsync(async (req, res) => {
   const user = await User.findById(req.user.user._id);
 
-  return res.status(200).json({ message: 'Successfully', data: user });
+  baseAirtable('users').find(req.user.user._id, function (err, record) {
+    if (err) return err;
+
+    return res.status(200).json({ message: 'Successfully', data: user });
+  });
 });
 
 export const postLogin = catchAsync(async (req, res) => {
@@ -43,7 +46,7 @@ export const postLogin = catchAsync(async (req, res) => {
           ...user._doc,
           token
         },
-        message: `Login successful`
+        message: `Login successfully`
       });
     });
   } catch (err) {
@@ -59,31 +62,32 @@ export const postRegister = catchAsync(async (req, res) => {
   if (!password)
     return res.status(400).json({ message: 'Password can not be null' });
 
-  try {
-    const checkExist = await User.findOne({ email });
+  const checkExist = await User.findOne({ email });
 
-    if (checkExist)
-      return res.status(400).json({ message: 'Email has been taken' });
+  if (checkExist)
+    return res.status(400).json({ message: 'Email has been taken' });
 
-    bcrypt.hash(password, 10, async (err, hash) => {
+  bcrypt.hash(password, 10, async (err, hash) => {
+    if (err) return err;
+
+    const user = new User({
+      name,
+      email,
+      password: hash,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    });
+
+    baseAirtable.table('users').create(user, async (err, record) => {
       if (err) return err;
 
-      const user = new User({
-        _id: uuidv4(),
-        name,
-        email,
-        password: hash
-      });
-
-      baseAirtable.table('users').create(user);
+      user._doc = { ...user._doc, _id: record.getId() };
 
       await user.save();
 
       return res
         .status(201)
-        .json({ data: user, message: 'Created successfully' });
+        .json({ data: user, message: 'Register successfully' });
     });
-  } catch (err) {
-    return res.status(500).json({ message: `Can't register right now` });
-  }
+  });
 });
