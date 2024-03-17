@@ -1,29 +1,10 @@
 import { Router } from 'express';
-import {
-  createNewField,
-  updateFieldById
-} from '../controllers/field.controller.js';
-import {
-  validateSurveyFieldForCreate,
-  validateSurveyFieldForUpdate,
-  verifyFields
-} from '../middleware/validate.middleware.js';
+import { deleteById, update, create } from '../controllers/field.controller.js';
 
 const router = Router();
 
-router
-  .route('/create/:surveyId')
-  .post(
-    validateSurveyFieldForCreate,
-    verifyFields('name', 'description', 'type', 'options'),
-    createNewField
-  );
+router.route('/create').post(create);
+router.route('/update/:fieldId').patch(update);
+router.route('/delete/:fieldId').delete(deleteById);
 
-router
-  .route('/:id')
-  .put(
-    validateSurveyFieldForUpdate,
-    verifyFields('name', 'description'),
-    updateFieldById
-  );
 export default router;

@@ -1,19 +1,6 @@
 import mongoose from 'mongoose';
 
-export const validTypes = [
-  'singleLineText',
-  'multilineText',
-  'singleSelect',
-  'multipleSelects',
-  'email',
-  'url',
-  'date',
-  'phoneNumber',
-  'multipleAttachments',
-  'checkbox',
-  'singleCollaborator',
-  'rating'
-];
+export const validTypes = ['singleLineText', 'singleSelect', 'multipleSelects'];
 
 const fieldSchema = new mongoose.Schema(
   {
@@ -34,7 +21,7 @@ const fieldSchema = new mongoose.Schema(
       type: String
     },
     options: {
-      type: mongoose.Schema.Types.Mixed
+      type: String
     },
     survey_id: {
       type: String,
