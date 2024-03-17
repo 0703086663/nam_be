@@ -2,6 +2,22 @@ import { catchAsync } from '../utils/catchAsync.js';
 import { Campaign } from '../model/campaign.model.js';
 import baseAirtable from '../utils/baseAirtable.js';
 
+export const getAllSurvey = catchAsync(async (req, res, next) => {
+  const _id = req.params.campaignId;
+
+  baseAirtable('surveys')
+    .select({
+      filterByFormula: `{campaign_id} = "${_id}"`
+    })
+    .all(function (err, records) {
+      if (err) return;
+
+      const data = records.map((record) => record.fields);
+
+      return res.status(200).json({ message: 'Successfully', data });
+    });
+});
+
 export const getAll = catchAsync(async (req, res, next) => {
   const records = await baseAirtable.table('campaigns').select().all();
 
