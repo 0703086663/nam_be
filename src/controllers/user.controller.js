@@ -5,6 +5,20 @@ import baseAirtable from '../utils/baseAirtable.js';
 import { v4 as uuidv4 } from 'uuid';
 import { catchAsync } from '../utils/catchAsync.js';
 
+export const getUserById = catchAsync(async (req, res) => {
+  const _id = req.params.userId;
+
+  const user = await User.findById(_id);
+
+  return res.status(200).json({ message: 'Successfully', data: user });
+});
+
+export const getProfile = catchAsync(async (req, res) => {
+  const user = await User.findById(req.user.user._id);
+
+  return res.status(200).json({ message: 'Successfully', data: user });
+});
+
 export const postLogin = catchAsync(async (req, res) => {
   const { email, password } = req.body;
 
@@ -22,7 +36,7 @@ export const postLogin = catchAsync(async (req, res) => {
 
       if (!result) return res.status(400).json({ message: 'Wrong password' });
 
-      var token = jwt.sign({ user }, process.env.JWT_KEY, { expiresIn: '24h' });
+      var token = jwt.sign({ user }, process.env.JWT_KEY);
 
       return res.status(200).json({
         data: {
