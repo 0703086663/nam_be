@@ -4,7 +4,7 @@ import { Field } from '../model/field.model.js';
 import { Survey } from '../model/survey.model.js';
 import AppError from '../utils/appError.js';
 import { catchAsync } from '../utils/catchAsync.js';
-import { airtableAxios } from '../utils/transferData.js';
+import airtableAxios from '../utils/transferData.js';
 import { Response } from '../model/response.model.js';
 
 // export const createSurvey = catchAsync(async (req, res, next) => {

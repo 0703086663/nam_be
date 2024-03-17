@@ -3,7 +3,7 @@ import { Field } from '../model/field.model.js';
 import { Response } from '../model/response.model.js';
 import { Survey } from '../model/survey.model.js';
 import { catchAsync } from '../utils/catchAsync.js';
-import { airtableAxios } from '../utils/transferData.js';
+import airtableAxios from '../utils/transferData.js';
 import _ from 'lodash';
 import AppError from '../utils/appError.js';
 

@@ -4,7 +4,7 @@ import AppError from '../utils/appError.js';
 import { catchAsync } from '../utils/catchAsync.js';
 import _ from 'lodash';
 import { Response } from '../model/response.model.js';
-import { airtableAxios } from '../utils/transferData.js';
+import airtableAxios from '../utils/transferData.js';
 
 // Initialize Airtable client
 Airtable.configure({

@@ -1,11 +1,16 @@
 import { Router } from 'express';
 import {
-  //   createCampaign,
-  getAllCampaigns
+  deleteById,
+  update,
+  create,
+  getAll
 } from '../controllers/campaign.controller.js';
 
 const router = Router();
 
-router.route('/').get(getAllCampaigns);
+router.route('/delete/:campaignId').post(deleteById);
+router.route('/update/:campaignId').post(update);
+router.route('/create').post(create);
+router.route('/').get(getAll);
 
 export default router;

@@ -14,6 +14,7 @@ import campaignRoutes from './router/campaign.route.js';
 import responseRoutes from './router/response.route.js';
 import fieldRoutes from './router/field.route.js';
 import userRoutes from './router/user.route.js';
+import authenticateToken from './middleware/authenicate.middleware.js';
 
 const app = express();
 
@@ -80,10 +81,10 @@ app.use(
 app.use(express.static(`${rootname}/public`));
 
 // 2) ROUTES
-app.use('/api/survey', surveyRoutes);
-app.use('/api/campaign', campaignRoutes);
-app.use('/api/response', responseRoutes);
-app.use('/api/field', fieldRoutes);
+app.use('/api/survey', authenticateToken, surveyRoutes);
+app.use('/api/campaign', authenticateToken, campaignRoutes);
+app.use('/api/response', authenticateToken, responseRoutes);
+app.use('/api/field', authenticateToken, fieldRoutes);
 app.use('/api/user', userRoutes);
 
 // 3) ERROR HANDLING

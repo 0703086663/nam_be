@@ -1,21 +1,21 @@
 import mongoose from 'mongoose';
 
-const campaignShema = new mongoose.Schema({
-  _id: {
-    type: String,
-    required: [true, "Campaign's id is required."]
+const campaignShema = new mongoose.Schema(
+  {
+    _id: {
+      type: String,
+      required: true
+    },
+    name: {
+      type: String,
+      required: [true, "Campaign's name is required."]
+    },
+    owner_id: {
+      type: String,
+      required: true
+    }
   },
-  name: {
-    type: String,
-    required: [true, "Campaign's name is required."]
-  },
-  permissionLevel: {
-    type: String
-  },
-  owner: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User'
-  }
-});
+  { timestamps: true }
+);
 
 export const Campaign = mongoose.model('Campaign', campaignShema);
