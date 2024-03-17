@@ -63,11 +63,12 @@ export const update = catchAsync(async (req, res, next) => {
 
     return res.status(200).json({
       message: 'Campaign updated successfully',
-      campaign: updatedCampaign
+      data: updatedCampaign
     });
   });
 });
 
+// TODO: Xoa survey, field, response
 export const deleteById = catchAsync(async (req, res, next) => {
   const _id = req.params.campaignId;
   const owner = req.user.user;

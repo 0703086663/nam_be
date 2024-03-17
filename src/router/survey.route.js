@@ -1,8 +1,10 @@
 import { Router } from 'express';
 import {
-  getAllSurveys,
+  deleteById,
+  update,
+  create,
   getSurveyById,
-  updateSurveyById
+  getAll
 } from '../controllers/survey.controller.js';
 import {
   // createFields,
@@ -15,15 +17,21 @@ import {
 
 const router = Router();
 
-router.route('/all/:campaignId').get(getAllSurveys);
+// router.route('/all/:campaignId').get(getAllSurveys);
 
-router
-  .route('/:id')
-  .get(getSurveyById, getAllFields)
-  .put(
-    validateSurveyForUpdate,
-    verifyFields('name', 'description'),
-    updateSurveyById
-  );
+// router
+//   .route('/:id')
+//   .get(getSurveyById, getAllFields)
+//   .put(
+//     validateSurveyForUpdate,
+//     verifyFields('name', 'description'),
+//     updateSurveyById
+//   );
+
+router.route('/delete/:surveyId').delete(deleteById);
+router.route('/update/:surveyId').patch(update);
+router.route('/create').post(create);
+router.route('/:surveyId').get(getSurveyById);
+router.route('/').get(getAll);
 
 export default router;

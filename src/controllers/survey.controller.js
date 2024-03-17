@@ -6,6 +6,7 @@ import AppError from '../utils/appError.js';
 import { catchAsync } from '../utils/catchAsync.js';
 import airtableAxios from '../utils/transferData.js';
 import { Response } from '../model/response.model.js';
+import baseAirtable from '../utils/baseAirtable.js';
 
 // export const createSurvey = catchAsync(async (req, res, next) => {
 //   const survey = await Survey.create({
@@ -20,100 +21,192 @@ import { Response } from '../model/response.model.js';
 //   next();
 // });
 
-export const getAllSurveys = catchAsync(async (req, res, next) => {
-  let campaignId = req.params.campaignId;
-  const result = await airtableAxios.get(`/meta/bases/${campaignId}/tables`);
-  const tables = result.data.tables;
-  for (let survey of tables) {
-    let surveyExist = await Survey.findById(survey.id);
-    if (!surveyExist) {
-      let newSurvey = {
-        _id: survey.id,
-        name: survey.name,
-        campaign_id: campaignId
-      };
-      survey.description && (newSurvey.description = survey.description);
-      await Survey.create(newSurvey);
+// export const getAllSurveys = catchAsync(async (req, res, next) => {
+//   let campaignId = req.params.campaignId;
+//   const result = await airtableAxios.get(`/meta/bases/${campaignId}/tables`);
+//   const tables = result.data.tables;
+//   for (let survey of tables) {
+//     let surveyExist = await Survey.findById(survey.id);
+//     if (!surveyExist) {
+//       let newSurvey = {
+//         _id: survey.id,
+//         name: survey.name,
+//         campaign_id: campaignId
+//       };
+//       survey.description && (newSurvey.description = survey.description);
+//       await Survey.create(newSurvey);
+//     }
+//     if (surveyExist && surveyExist.name !== survey.name) {
+//       await Survey.findByIdAndUpdate(survey.id, { name: survey.name });
+//     }
+//     if (surveyExist && surveyExist.description !== survey.description) {
+//       await Survey.findByIdAndUpdate(survey.id, {
+//         description: survey.description
+//       });
+//     }
+//   }
+//   let surveys = await Survey.find(
+//     { campaign_id: campaignId },
+//     { __v: false, campaign_id: false }
+//   );
+//   let listTableId = tables.map((table) => table.id);
+//   let delFlag = false;
+//   for (let survey of surveys) {
+//     if (!listTableId.includes(survey._id)) {
+//       delFlag = true;
+//       await Survey.findByIdAndDelete(survey._id);
+//       await Field.deleteMany({ survey_id: survey._id });
+//       await Response.deleteMany({ survey_id: survey._id });
+//     }
+//   }
+//   if (delFlag) {
+//     surveys = await Survey.find(
+//       { campaign_id: campaignId },
+//       { __v: false, campaign_id: false }
+//     );
+//   }
+//   res.status(200).json({
+//     status: 'success',
+//     data: {
+//       surveys
+//     }
+//   });
+// });
+
+// export const getSurveyById = catchAsync(async (req, res, next) => {
+//   let surveyId = req.params.id;
+//   let surveyDB = await Survey.findById(surveyId, { __v: false });
+//   if (!surveyDB) {
+//     return next(new AppError('Survey not found', 404));
+//   }
+//   let campaignId = surveyDB.campaign_id;
+//   let result = await airtableAxios.get(`/meta/bases/${campaignId}/tables`);
+//   let tables = result.data.tables;
+//   let survey = tables.find((table) => table.id === surveyId);
+//   req.body.survey = survey;
+//   req.body.surveyDB = {
+//     _id: surveyDB._id,
+//     name: survey.name,
+//     description: survey.description
+//   };
+//   next();
+// });
+
+// // https://api.airtable.com/v0/meta/bases/{baseId}/tables/{tableIdOrName}
+// export const updateSurveyById = catchAsync(async (req, res, next) => {
+//   let surveyId = req.params.id;
+//   let survey = await Survey.findById(surveyId);
+//   if (!survey) {
+//     return next(new AppError('Survey not found', 404));
+//   }
+//   let campaignId = survey.campaign_id;
+//   await airtableAxios.patch(
+//     `/meta/bases/${campaignId}/tables/${surveyId}`,
+//     req.body
+//   );
+//   let surveyDB = await Survey.findByIdAndUpdate(surveyId, req.body, {
+//     new: true,
+//     runValidators: true,
+//     projection: {
+//       __v: false
+//     }
+//   });
+//   res.status(200).json({
+//     status: 'success',
+//     data: {
+//       survey: surveyDB
+//     }
+//   });
+// });
+
+// TODO: Delete fields, reponses
+export const deleteById = catchAsync(async (req, res, next) => {
+  const _id = req.params.surveyId;
+
+  if (!_id) throw new Error(`Survey ID not provided`);
+
+  const survey = await Survey.findById(_id);
+  if (!survey) return res.status(404).json({ error: 'Survey not found' });
+
+  baseAirtable('surveys').destroy(_id, async (err, deletedRecord) => {
+    if (err) return;
+
+    await Survey.deleteOne({ _id });
+
+    return res.status(200).json({
+      message: 'Survey deleted successfully'
+    });
+  });
+});
+
+export const update = catchAsync(async (req, res, next) => {
+  const _id = req.params.surveyId;
+
+  if (!_id) return res.status(400).json({ error: 'Survey ID not provided' });
+
+  const survey = await Survey.findById(_id);
+  if (!survey) return res.status(404).json({ error: 'Survey not found' });
+
+  baseAirtable('surveys').update(_id, req.body, async (err, record) => {
+    if (err) return;
+
+    const updatedSurvey = await Survey.findByIdAndUpdate(_id, req.body, {
+      new: true
+    });
+
+    return res.status(200).json({
+      message: 'Survey updated successfully',
+      data: updatedSurvey
+    });
+  });
+});
+
+export const create = catchAsync(async (req, res, next) => {
+  const { name, description, campaign_id } = req.body;
+
+  if (!name) return res.status(400).json({ message: `Name can not be empty` });
+
+  var survey = new Survey({
+    name,
+    description,
+    campaign_id,
+    createdAt: new Date(),
+    updatedAt: new Date()
+  });
+
+  baseAirtable.table('surveys').create(survey, async (err, record) => {
+    if (err) {
+      return err;
     }
-    if (surveyExist && surveyExist.name !== survey.name) {
-      await Survey.findByIdAndUpdate(survey.id, { name: survey.name });
-    }
-    if (surveyExist && surveyExist.description !== survey.description) {
-      await Survey.findByIdAndUpdate(survey.id, {
-        description: survey.description
-      });
-    }
-  }
-  let surveys = await Survey.find(
-    { campaign_id: campaignId },
-    { __v: false, campaign_id: false }
-  );
-  let listTableId = tables.map((table) => table.id);
-  let delFlag = false;
-  for (let survey of surveys) {
-    if (!listTableId.includes(survey._id)) {
-      delFlag = true;
-      await Survey.findByIdAndDelete(survey._id);
-      await Field.deleteMany({ survey_id: survey._id });
-      await Response.deleteMany({ survey_id: survey._id });
-    }
-  }
-  if (delFlag) {
-    surveys = await Survey.find(
-      { campaign_id: campaignId },
-      { __v: false, campaign_id: false }
-    );
-  }
-  res.status(200).json({
-    status: 'success',
-    data: {
-      surveys
-    }
+
+    survey._doc = { ...survey._doc, _id: record.getId() };
+    await survey.save();
+
+    return res
+      .status(201)
+      .json({ data: survey, message: 'Created successfully' });
   });
 });
 
 export const getSurveyById = catchAsync(async (req, res, next) => {
-  let surveyId = req.params.id;
-  let surveyDB = await Survey.findById(surveyId, { __v: false });
-  if (!surveyDB) {
-    return next(new AppError('Survey not found', 404));
-  }
-  let campaignId = surveyDB.campaign_id;
-  let result = await airtableAxios.get(`/meta/bases/${campaignId}/tables`);
-  let tables = result.data.tables;
-  let survey = tables.find((table) => table.id === surveyId);
-  req.body.survey = survey;
-  req.body.surveyDB = {
-    _id: surveyDB._id,
-    name: survey.name,
-    description: survey.description
-  };
-  next();
+  const _id = req.params.surveyId;
+
+  const survey = await Survey.findById(_id);
+
+  baseAirtable('surveys').find(_id, function (err, record) {
+    if (err) return err;
+
+    return res.status(200).json({ message: 'Successfully', data: survey });
+  });
 });
 
-// https://api.airtable.com/v0/meta/bases/{baseId}/tables/{tableIdOrName}
-export const updateSurveyById = catchAsync(async (req, res, next) => {
-  let surveyId = req.params.id;
-  let survey = await Survey.findById(surveyId);
-  if (!survey) {
-    return next(new AppError('Survey not found', 404));
-  }
-  let campaignId = survey.campaign_id;
-  await airtableAxios.patch(
-    `/meta/bases/${campaignId}/tables/${surveyId}`,
-    req.body
-  );
-  let surveyDB = await Survey.findByIdAndUpdate(surveyId, req.body, {
-    new: true,
-    runValidators: true,
-    projection: {
-      __v: false
-    }
-  });
-  res.status(200).json({
-    status: 'success',
-    data: {
-      survey: surveyDB
-    }
+export const getAll = catchAsync(async (req, res, next) => {
+  const records = await baseAirtable.table('surveys').select().all();
+
+  const data = records.map((record) => record.fields);
+
+  return res.status(200).json({
+    message: 'success',
+    data
   });
 });
