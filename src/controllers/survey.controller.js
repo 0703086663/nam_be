@@ -109,3 +109,19 @@ export const getAllFields = catchAsync(async (req, res, next) => {
       return res.status(200).json({ message: 'Successfully', data });
     });
 });
+
+export const getAllResponses = catchAsync(async (req, res, next) => {
+  const _id = req.params.surveyId;
+
+  baseAirtable('responses')
+    .select({
+      filterByFormula: `{survey_id} = "${_id}"`
+    })
+    .all(function (err, records) {
+      if (err) return;
+
+      const data = records.map((record) => record.fields);
+
+      return res.status(200).json({ message: 'Successfully', data });
+    });
+});
