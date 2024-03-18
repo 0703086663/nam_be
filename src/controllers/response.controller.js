@@ -33,3 +33,25 @@ export const create = catchAsync(async (req, res, next) => {
       .json({ data: field, message: 'Created successfully' });
   });
 });
+
+export const deleteById = catchAsync(async (req, res, next) => {
+  const _id = req.params.responseId;
+
+  if (!_id) throw new Error(`Response ID not provided`);
+
+  const response = await Response.findById(_id);
+  if (!response) return res.status(404).json({ error: 'Response not found' });
+
+  baseAirtable('responses').destroy(_id, async (err) => {
+    if (err) {
+      console.error('Error deleting fields from Airtable:', err);
+      throw new Error('Internal server error');
+    }
+
+    await Response.deleteOne({ _id });
+
+    return res
+      .status(200)
+      .json({ success: true, message: 'Deleted successfully' });
+  });
+});

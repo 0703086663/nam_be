@@ -1,8 +1,9 @@
 import { Router } from 'express';
-import { create } from '../controllers/response.controller.js';
+import { create, deleteById } from '../controllers/response.controller.js';
 
 const router = Router();
 
 router.route('/create').post(create);
+router.route('/delete/:responseId').delete(deleteById);
 
 export default router;
