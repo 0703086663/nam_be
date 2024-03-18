@@ -1,10 +1,5 @@
-import Airtable from 'airtable';
-import { Survey } from '../model/survey.model.js';
-import AppError from '../utils/appError.js';
 import { catchAsync } from '../utils/catchAsync.js';
-import _ from 'lodash';
 import { Response } from '../model/response.model.js';
-import airtableAxios from '../utils/transferData.js';
 import baseAirtable from '../utils/baseAirtable.js';
 
 export const create = catchAsync(async (req, res, next) => {

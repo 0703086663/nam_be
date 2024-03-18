@@ -1,6 +1,7 @@
 import { catchAsync } from '../utils/catchAsync.js';
 import { Campaign } from '../model/campaign.model.js';
 import baseAirtable from '../utils/baseAirtable.js';
+import deleteRelated from '../utils/deleteRelated.js';
 
 export const getAllSurvey = catchAsync(async (req, res, next) => {
   const _id = req.params.campaignId;
@@ -84,11 +85,9 @@ export const update = catchAsync(async (req, res, next) => {
   });
 });
 
-// TODO: Xoa survey, field, response
 export const deleteById = catchAsync(async (req, res, next) => {
   const _id = req.params.campaignId;
   const owner = req.user.user;
-
   if (!_id) throw new Error(`Campaign ID not provided`);
 
   const campaign = await Campaign.findById(_id);
@@ -97,15 +96,37 @@ export const deleteById = catchAsync(async (req, res, next) => {
   if (campaign.owner_id !== owner._id)
     return res
       .status(403)
-      .json({ error: 'You are not allowed to update this campaign' });
+      .json({ error: 'You are not allowed to delete this campaign' });
 
-  baseAirtable('campaigns').destroy(_id, async (err, deletedRecord) => {
-    if (err) return;
+  try {
+    baseAirtable('campaigns').destroy(_id, async (err, deletedRecord) => {
+      if (err) return;
 
-    await Campaign.deleteOne({ _id });
+      await Campaign.deleteOne({ _id });
 
-    return res.status(200).json({
-      message: 'Campaign deleted successfully'
+      baseAirtable('surveys')
+        .select({
+          filterByFormula: `{campaign_id} = "${_id}"`
+        })
+        .eachPage((records) => {
+          const surveyIds = records.map((record) => record.id);
+
+          if (surveyIds.length > 0) {
+            baseAirtable('surveys').destroy(surveyIds, async (err) => {
+              if (err) {
+                console.error('Error deleting surveys from Airtable:', err);
+                return reject(err);
+              }
+
+              result = await deleteRelated(_id);
+            });
+          }
+        });
+
+      return res.status(200).json({ message: 'Deleted successfully' });
     });
-  });
+  } catch (err) {
+    console.error(err);
+    return new Error(err);
+  }
 });

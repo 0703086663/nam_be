@@ -1,8 +1,8 @@
 import { Survey } from '../model/survey.model.js';
 import { catchAsync } from '../utils/catchAsync.js';
 import baseAirtable from '../utils/baseAirtable.js';
+import deleteRelated from '../utils/deleteRelated.js';
 
-// TODO: Delete fields, reponses
 export const deleteById = catchAsync(async (req, res, next) => {
   const _id = req.params.surveyId;
 
@@ -11,15 +11,8 @@ export const deleteById = catchAsync(async (req, res, next) => {
   const survey = await Survey.findById(_id);
   if (!survey) return res.status(404).json({ error: 'Survey not found' });
 
-  baseAirtable('surveys').destroy(_id, async (err, deletedRecord) => {
-    if (err) return;
-
-    await Survey.deleteOne({ _id });
-
-    return res.status(200).json({
-      message: 'Survey deleted successfully'
-    });
-  });
+  const result = await deleteRelated(_id);
+  return res.status(200).json(result);
 });
 
 export const update = catchAsync(async (req, res, next) => {
