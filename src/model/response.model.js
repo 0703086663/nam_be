@@ -10,6 +10,10 @@ const responseSchema = new mongoose.Schema(
       type: String,
       required: [true, 'Content is required.']
     },
+    response_id: {
+      type: String,
+      required: true
+    },
     survey_id: {
       type: String,
       required: true

@@ -3,17 +3,18 @@ import { Response } from '../model/response.model.js';
 import baseAirtable from '../utils/baseAirtable.js';
 
 export const create = catchAsync(async (req, res, next) => {
-  const { content, survey_id, field_id } = req.body;
+  const { content, survey_id, field_id, response_id } = req.body;
 
-  if (!content || !survey_id || !field_id)
+  if (!content || !survey_id || !field_id || !response_id)
     return res
       .status(400)
-      .json({ message: `Content, survey id, field id can not be empty` });
+      .json({ message: `Content, survey id, field id, response id can not be empty` });
 
   var field = new Response({
     content,
     survey_id,
     field_id,
+    response_id, 
     owner_id: req.user.user._id,
     createdAt: new Date(),
     updatedAt: new Date()
