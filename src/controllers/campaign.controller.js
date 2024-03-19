@@ -80,6 +80,10 @@ export const getAllCampaigns = catchAsync(async (req, res, next) => {
         await Response.deleteMany({ survey_id: id });
       }
     }
+
+    // Count survey
+    const survey = await Survey.find({ campaign_id: campaign._id });
+    campaign._doc = { ...campaign._doc, countSurvey: survey.length };
   }
   if (delFlag) {
     campaigns = await Campaign.find({}, { __v: false });

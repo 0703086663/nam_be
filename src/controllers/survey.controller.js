@@ -57,6 +57,17 @@ export const getAllSurveys = catchAsync(async (req, res, next) => {
       await Field.deleteMany({ survey_id: survey._id });
       await Response.deleteMany({ survey_id: survey._id });
     }
+
+    // Count response
+    const response = await Response.find({ survey_id: survey._id });
+    // Get list of fields
+    const fields = await Field.find({ survey_id: survey._id });
+
+    survey._doc = {
+      ...survey._doc,
+      fields,
+      countResponse: response.length
+    };
   }
   if (delFlag) {
     surveys = await Survey.find(

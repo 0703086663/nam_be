@@ -3,8 +3,9 @@ import rateLimit from 'express-rate-limit';
 import helmet from 'helmet';
 import mongoSanitize from 'express-mongo-sanitize';
 import hpp from 'hpp';
+import cors from 'cors';
 
-import AppError from './utils/appError.js';
+// import AppError from './utils/appError.js';
 import globalErrorHandler from './controllers/error.controller.js';
 import morgan from 'morgan';
 import { rootname } from './utils/path.js';
@@ -12,14 +13,27 @@ import surveyRoutes from './router/survey.route.js';
 import campaignRoutes from './router/campaign.route.js';
 import responseRoutes from './router/response.route.js';
 import fieldRoutes from './router/field.route.js';
+import userRoutes from './router/user.route.js';
+import authenticateToken from './middleware/authenicate.middleware.js';
 
 const app = express();
 
-app.use(function(req, res, next) {
-  res.header("Access-Control-Allow-Origin", "*");
-  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+app.use(function (req, res, next) {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header(
+    'Access-Control-Allow-Headers',
+    'Origin, X-Requested-With, Content-Type, Accept'
+  );
   next();
 });
+
+app.use(cors());
+app.use(
+  cors({
+    origin: 'http://localhost:3000',
+    methods: ['GET', 'POST', 'PUT', 'DELETE']
+  })
+);
 
 // 1) GLOBAL MIDDLEWARES
 // set security HTTP headers
@@ -43,7 +57,7 @@ const limiter = rateLimit({
 });
 
 // apply the limiter to all routes that start with /api
-app.use('/api', limiter);
+// app.use('/api', limiter);
 
 // middleware to parse the body of the request into json
 // limit the size of the body to 10mb
@@ -67,10 +81,12 @@ app.use(
 app.use(express.static(`${rootname}/public`));
 
 // 2) ROUTES
-app.use('/api/survey', surveyRoutes);
-app.use('/api/campaign', campaignRoutes);
-app.use('/api/response', responseRoutes);
-app.use('/api/field', fieldRoutes);
+// TODO: add authenticateToken
+app.use('/api/survey', authenticateToken, surveyRoutes);
+app.use('/api/campaign', authenticateToken, campaignRoutes);
+app.use('/api/response', authenticateToken, responseRoutes);
+app.use('/api/field', authenticateToken, fieldRoutes);
+app.use('/api/user', userRoutes);
 
 // 3) ERROR HANDLING
 app.all('*', (req, res, next) => {
